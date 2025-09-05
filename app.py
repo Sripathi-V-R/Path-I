@@ -11,7 +11,6 @@ st.markdown("""
             background-color: #0e1117;
             color: #ffffff;
         }
-        /* Centered logo + title */
         .app-header {
             display: flex;
             flex-direction: column;
@@ -28,7 +27,6 @@ st.markdown("""
             color: #00e0ff;
             text-shadow: 0 0 15px #00e0ff;
         }
-        /* Chat bubbles */
         .user-msg {
             text-align: right;
             background: linear-gradient(135deg, #00e0ff, #0077ff);
@@ -77,21 +75,27 @@ if submitted and user_input:
     # Append user message
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-    # Hugging Face API call
-    API_URL = "https://api-inference.huggingface.co/models/EleutherAI/gpt-neo-125M"
+    # Hugging Face API call (Mistral 7B Instruct)
+    API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
     headers = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_API_KEY']}"}
     payload = {
-        "inputs": user_input,
-        "parameters": {"max_new_tokens": 150, "do_sample": True, "temperature": 0.7}
+        "inputs": f"[INST] {user_input} [/INST]",   # formatted for instruct model
+        "parameters": {"max_new_tokens": 200, "do_sample": True, "temperature": 0.7}
     }
 
     try:
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
         response.raise_for_status()
         response_json = response.json()
-        ai_message = response_json[0]["generated_text"].replace(user_input, "").strip()
+
+        if isinstance(response_json, list) and "generated_text" in response_json[0]:
+            ai_message = response_json[0]["generated_text"].replace(user_input, "").strip()
+        elif "error" in response_json:
+            ai_message = f"⚠️ API Error: {response_json['error']}"
+        else:
+            ai_message = str(response_json)
     except Exception as e:
-        ai_message = f"⚠️ Error: {str(e)}"
+        ai_message = f"⚠️ Request failed: {str(e)}"
 
     st.session_state.messages.append({"role": "assistant", "content": ai_message})
 
@@ -102,3 +106,5 @@ with chat_container:
             st.markdown(f"<div class='user-msg'>{msg['content']}</div>", unsafe_allow_html=True)
         else:
             st.markdown(f"<div class='bot-msg'>{msg['content']}</div>", unsafe_allow_html=True)
+
+
