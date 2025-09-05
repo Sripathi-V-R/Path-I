@@ -4,18 +4,62 @@ import requests
 # Page config
 st.set_page_config(page_title="Path-I", page_icon="💬", layout="wide")
 
-# Centered logo
-st.markdown(
-    """
-    <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-        <img src="logo.png" width="150">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# --- Custom CSS for high-tech layout ---
+st.markdown("""
+    <style>
+        body {
+            background-color: #0e1117;
+            color: #ffffff;
+        }
+        /* Centered logo + title */
+        .app-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .app-header img {
+            width: 120px;
+            margin-bottom: 10px;
+        }
+        .app-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: #00e0ff;
+            text-shadow: 0 0 15px #00e0ff;
+        }
+        /* Chat bubbles */
+        .user-msg {
+            text-align: right;
+            background: linear-gradient(135deg, #00e0ff, #0077ff);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin: 5px 0;
+            display: inline-block;
+            max-width: 70%;
+        }
+        .bot-msg {
+            text-align: left;
+            background: #1e1e2f;
+            color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin: 5px 0;
+            display: inline-block;
+            max-width: 70%;
+            border: 1px solid #333;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# App title
-st.title("💬 Free ChatGPT Clone (Hugging Face API)")
+# --- Header with logo and app name ---
+st.markdown("""
+    <div class="app-header">
+        <img src="logo.png" alt="Path-I Logo">
+        <div class="app-title">💬 Path-I: AI Chat Assistant</div>
+    </div>
+""", unsafe_allow_html=True)
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -42,11 +86,12 @@ if submitted and user_input:
     }
 
     try:
-        response = requests.post(API_URL, headers=headers, json=payload)
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
+        response.raise_for_status()
         response_json = response.json()
-        ai_message = response_json[0]["generated_text"]
-    except:
-        ai_message = "⚠️ Error generating response. Try again."
+        ai_message = response_json[0]["generated_text"].replace(user_input, "").strip()
+    except Exception as e:
+        ai_message = f"⚠️ Error: {str(e)}"
 
     st.session_state.messages.append({"role": "assistant", "content": ai_message})
 
@@ -54,6 +99,6 @@ if submitted and user_input:
 with chat_container:
     for msg in st.session_state.messages:
         if msg["role"] == "user":
-            st.markdown(f"<div style='text-align: right; background-color:#DCF8C6; padding:8px; border-radius:10px; margin:5px 0'>{msg['content']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='user-msg'>{msg['content']}</div>", unsafe_allow_html=True)
         else:
-            st.markdown(f"<div style='text-align: left; background-color:#F1F0F0; padding:8px; border-radius:10px; margin:5px 0'>{msg['content']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='bot-msg'>{msg['content']}</div>", unsafe_allow_html=True)
