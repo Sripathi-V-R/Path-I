@@ -2,7 +2,19 @@ import streamlit as st
 import requests
 
 # Page config
-st.set_page_config(page_title="Free ChatGPT Clone", page_icon="💬", layout="wide")
+st.set_page_config(page_title="Path-I", page_icon="💬", layout="wide")
+
+# Centered logo
+st.markdown(
+    """
+    <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+        <img src="logo.png" width="150">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# App title
 st.title("💬 Free ChatGPT Clone (Hugging Face API)")
 
 # Initialize chat history
@@ -12,7 +24,7 @@ if "messages" not in st.session_state:
 # Chat container
 chat_container = st.container()
 
-# User input
+# User input form
 with st.form(key="user_input_form", clear_on_submit=True):
     user_input = st.text_input("Type your message:", "")
     submitted = st.form_submit_button("Send")
@@ -21,7 +33,7 @@ if submitted and user_input:
     # Append user message
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-    # Call Hugging Face API
+    # Hugging Face API call
     API_URL = "https://api-inference.huggingface.co/models/EleutherAI/gpt-neo-125M"
     headers = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_API_KEY']}"}
     payload = {
